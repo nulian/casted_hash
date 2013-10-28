@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/stephankaag/cached_hash.png?branch=master)](https://travis-ci.org/stephankaag/cached_hash)
+
 # CastedHash
 
 ## Installation
