@@ -3,11 +3,11 @@ require "equalizer"
 require "active_support/hash_with_indifferent_access"
 
 class CastedHash
-  include Equalizer.new(:to_hash)
+  include Equalizer.new(:casted_hash)
   extend Forwardable
-  def_delegators :@hash, *[:update]
-  def_delegators :to_hash, *[:values, :each, :each_pair, :keys]
-  def_delegators :to_hash, *Enumerable.public_instance_methods
+  def_delegators :@hash, *[:update, :keys]
+  def_delegators :casted_hash, *[:values, :each, :each_pair]
+  def_delegators :casted_hash, *Enumerable.public_instance_methods
 
   def initialize(constructor = {}, cast_proc = lambda { |x| x }, casted_keys = [])
     @hash = HashWithIndifferentAccess.new(constructor)
@@ -37,24 +37,34 @@ class CastedHash
   end
 
   def to_hash
-    cast_all!
-    Hash.new.merge!(@hash)
+    @hash
   end
 
   def merge(other)
+    other = other.to_hash
     CastedHash.new(@hash.merge(other), @cast_proc, @casted_keys - other.keys.map(&:to_s))
   end
 
   def merge!(other)
+    other = other.to_hash
     other.keys.each {| key | @casted_keys.delete key.to_s }
     @hash.merge!(other)
   end
 
-private
-
   def casted?(key)
     @casted_keys.include?(key.to_s)
   end
+
+  def inspect
+    "#<#{self.class.name} hash=#{@hash.keys.inject({}){|hash, (k, v)|hash.merge(k => casted?(k) ? @hash[k] : "<#{@hash[k]}>")}.inspect}>"
+  end
+
+  def casted_hash
+    cast_all!
+    @hash
+  end
+
+private
 
   def cast_all!
     @hash.each do |key, value|
