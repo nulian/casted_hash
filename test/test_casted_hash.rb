@@ -35,13 +35,13 @@ class TestCastedHash < Minitest::Test
     it "should inspect processed values" do
       hash = CastedHash.new(nil, lambda { |x| "foobar" })
 
-      assert_equal("#<CastedHash hash={}>", hash.inspect)
+      assert_equal("#<CastedHash to_hash={}>", hash.inspect)
 
       hash[:bar] = "foo"
-      assert_equal("#<CastedHash hash={\"bar\"=>\"foobar\"}>", hash.inspect)
+      assert_equal("#<CastedHash to_hash={\"bar\"=>\"foobar\"}>", hash.inspect)
 
       hash = CastedHash.new({:foo => "bar"}, lambda { |x| "foobar" })
-      assert_equal("#<CastedHash hash={\"foo\"=>\"foobar\"}>", hash.inspect)
+      assert_equal("#<CastedHash to_hash={\"foo\"=>\"foobar\"}>", hash.inspect)
     end
 
     it "should loop through processed values" do
@@ -86,6 +86,15 @@ class TestCastedHash < Minitest::Test
 
       assert_equal 13, hash[:a]
       assert_equal 12, hash[:b]
+    end
+
+    it "should define a hash method" do
+      hash1 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
+      hash2 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
+      hash3 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 11 })
+
+      assert_equal hash1.hash, hash2.hash
+      assert hash1.hash != hash3.hash
     end
 
   end

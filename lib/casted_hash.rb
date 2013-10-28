@@ -3,11 +3,11 @@ require "equalizer"
 require "active_support/hash_with_indifferent_access"
 
 class CastedHash
-  include Equalizer.new(:hash)
+  include Equalizer.new(:to_hash)
   extend Forwardable
   def_delegators :@hash, *[:update]
-  def_delegators :hash, *[:values, :each, :each_pair, :keys]
-  def_delegators :hash, *Enumerable.public_instance_methods
+  def_delegators :to_hash, *[:values, :each, :each_pair, :keys]
+  def_delegators :to_hash, *Enumerable.public_instance_methods
 
   def initialize(constructor = {}, cast_proc = lambda { |x| x }, casted_keys = [])
     @hash = HashWithIndifferentAccess.new(constructor)
@@ -37,7 +37,8 @@ class CastedHash
   end
 
   def to_hash
-    Hash.new.merge!(hash)
+    cast_all!
+    Hash.new.merge!(@hash)
   end
 
   def merge(other)
@@ -53,11 +54,6 @@ private
 
   def casted?(key)
     @casted_keys.include?(key.to_s)
-  end
-
-  def hash
-    cast_all!
-    @hash
   end
 
   def cast_all!
