@@ -56,7 +56,7 @@ class CastedHash
   end
 
   def inspect
-    "#<#{self.class.name} hash=#{@hash.keys.inject({}){|hash, (k, v)|hash.merge(k => casted?(k) ? @hash[k] : "<#{@hash[k]}>")}.inspect}>"
+    "#<CastedHash hash=#{@hash.keys.inject({}){|hash, (k, v)|hash.merge(k => casted?(k) ? @hash[k] : "<#{@hash[k]}>")}.inspect}>"
   end
 
   def casted_hash
