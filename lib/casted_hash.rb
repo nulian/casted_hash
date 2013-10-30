@@ -16,13 +16,20 @@ class CastedHash
   end
 
   def fetch(key, *args)
-    cast! key, @hash.fetch(key, *args) unless casted?(key)
-    @hash.fetch(key, *args)
+    unless (val = @hash[key]).nil?
+      cast! key, val unless casted?(key)
+      @hash.fetch(key, *args)
+    else
+      @hash.fetch(key, *args)
+    end
   end
 
   def [](key)
-    cast! key, @hash[key] unless casted?(key)
-    @hash[key]
+    val = @hash[key]
+    unless val.nil?
+      cast! key, val unless casted?(key)
+      @hash[key]
+    end
   end
 
   def []=(key, value)

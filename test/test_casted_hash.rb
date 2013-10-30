@@ -146,5 +146,19 @@ class TestCastedHash < Minitest::Test
       assert hash1.hash != hash3.hash
     end
 
+    it "should not add all requested values" do
+      hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x|x})
+      assert_nil hash[:undefined_key]
+
+      assert_equal ["a", "b"], hash.keys
+
+      assert_raises(KeyError) do
+        hash.fetch('another_undefined_key')
+      end
+
+      assert_equal '123', hash.fetch('another_undefined_key', '123')
+      assert_equal ["a", "b"], hash.keys
+    end
+
   end
 end
