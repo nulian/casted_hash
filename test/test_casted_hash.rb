@@ -70,11 +70,6 @@ class TestCastedHash < Minitest::Test
       assert_equal ["processed: 1", "processed: 2"], map
     end
 
-    it "should reject casted values" do
-      hash = CastedHash.new({:a => 1, :b => 2}, lambda { |x| x + 10 })
-      assert_equal({"b" => 12}, hash.reject {|key, value| value == 11})
-    end
-
     it "should delete values" do
       hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       hash.delete(:b)
