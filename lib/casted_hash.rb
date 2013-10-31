@@ -1,45 +1,53 @@
 require "casted_hash/version"
 require "equalizer"
+require "casted_hash/value"
 require "active_support/hash_with_indifferent_access"
 
 class CastedHash
-  include Equalizer.new(:casted_hash)
+  include Equalizer.new(:raw, :cast_proc)
   extend Forwardable
-  def_delegators :@hash, *[:update, :keys]
-  def_delegators :casted_hash, *[:values, :each, :each_pair]
-  def_delegators :casted_hash, *Enumerable.public_instance_methods
+  attr_reader :cast_proc
 
-  def initialize(constructor = {}, cast_proc = lambda { |x| x }, casted_keys = [])
-    @hash = HashWithIndifferentAccess.new(constructor)
-    @casted_keys = casted_keys.map &:to_s
+  def_delegators :@hash, *[:keys, :inject, :key?, :include?]
+  def_delegators :casted_hash, *[:collect]
+
+  def initialize(constructor = {}, cast_proc = lambda { |x| x })
     @cast_proc = cast_proc
+    @hash = HashWithIndifferentAccess.new(pack_hash(constructor))
+  end
+
+  def each
+    @hash.each do |key, value|
+      yield key, value.casted_value
+    end
+  end
+  alias_method :each_pair, :each
+
+  def values
+    @hash.values.map(&:casted_value)
   end
 
   def fetch(key, *args)
-    unless (val = @hash[key]).nil?
-      cast! key, val unless casted?(key)
+    val = @hash[key]
+
+    if val.nil?
       @hash.fetch(key, *args)
     else
-      @hash.fetch(key, *args)
+      cast(key, val).value
     end
   end
 
   def [](key)
     val = @hash[key]
-    unless val.nil?
-      cast! key, val unless casted?(key)
-      @hash[key]
-    end
+    val.casted_value unless val.nil?
   end
 
   def []=(key, value)
-    uncasted! key
-    @hash[key] = value
+    @hash[key] = pack(value)
   end
   alias_method :store, :[]=
 
   def delete(key)
-    uncasted! key
     @hash.delete(key)
   end
 
@@ -49,43 +57,54 @@ class CastedHash
 
   def merge(other)
     other = other.to_hash
-    CastedHash.new(@hash.merge(other), @cast_proc, @casted_keys - other.keys.map(&:to_s))
+    self.class.new(@hash.merge(other), cast_proc)
   end
 
   def merge!(other)
-    other = other.to_hash
-    other.keys.each {| key | @casted_keys.delete key.to_s }
+    other = pack_hash(other)
     @hash.merge!(other)
   end
 
   def casted?(key)
-    @casted_keys.include?(key.to_s)
+    val = @hash[key]
+    val.casted? if val
   end
 
   def inspect
-    "#<CastedHash hash=#{@hash.keys.inject({}){|hash, (k, v)|hash.merge(k => casted?(k) ? @hash[k] : "<#{@hash[k]}>")}.inspect}>"
+    "#<#{self.class.name} hash=#{@hash.inject({}){|hash, (k, v)|hash.merge(k => casted?(k) ? v.value : "<#{v.value}>")}}>"
   end
 
   def casted_hash
     cast_all!
-    @hash
+
+    @hash.inject({}) do |hash, (key, value)|
+      hash.merge(key => value.value)
+    end
   end
 
 private
 
+  def raw
+    @hash
+  end
+
   def cast_all!
     @hash.each do |key, value|
-      cast!(key, value) unless casted?(key)
+      value.cast!
     end
   end
 
-  def cast!(key, value)
-    value = @cast_proc.call(value)
-    update key => value
-    @casted_keys << key.to_s
+  def pack(value)
+    if value.is_a?(Value)
+      value
+    else
+      Value.new(value, cast_proc)
+    end
   end
 
-  def uncasted!(key)
-    @casted_keys.delete key.to_s
+  def pack_hash(hash)
+    hash.inject({}) do |hash, (key, value)|
+      hash.merge key => pack(value)
+    end if hash
   end
 end
