@@ -95,6 +95,8 @@ class TestCastedHash < Minitest::Test
 
       assert_equal 13, hash[:a]
       assert_equal 12, hash[:b]
+
+      assert_equal hash, hash.merge({})
     end
 
     it "should take over scope when merging two casted hashes" do

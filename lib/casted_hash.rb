@@ -72,7 +72,7 @@ class CastedHash
   end
 
   def update(other_hash)
-    return unless other_hash.any?
+    return self if other_hash.empty?
 
     if other_hash.is_a? CastedHash
       @hash.update other_hash.pack_hash(self)
