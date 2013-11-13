@@ -9,11 +9,21 @@ class CastedHash
   attr_reader :cast_proc
 
   def_delegators :@hash, *[:keys, :inject, :key?, :include?]
-  def_delegators :casted_hash, *[:collect]
+  def_delegators :casted_hash, *[:collect, :reject]
 
-  def initialize(constructor = {}, cast_proc = lambda { |x| x })
+  def initialize(constructor = {}, cast_proc = nil)
+    raise ArgumentError, "`cast_proc` required" unless cast_proc
+
     @cast_proc = cast_proc
-    @hash = HashWithIndifferentAccess.new(pack_hash(constructor))
+
+    if constructor.is_a?(Hash)
+      @hash = HashWithIndifferentAccess.new
+      update(constructor)
+    elsif constructor.is_a?(CastedHash)
+      @hash = constructor.pack_hash(self)
+    else
+      raise ArgumentError
+    end
   end
 
   def each
@@ -55,14 +65,24 @@ class CastedHash
     @hash
   end
 
-  def merge(other)
-    other = other.to_hash
-    self.class.new(@hash.merge(other), cast_proc)
+  def pack_hash(casted_hash)
+    @hash.inject(HashWithIndifferentAccess.new) do |hash, (key, value)|
+      hash.merge key => pack(value, casted_hash)
+    end
   end
 
-  def merge!(other)
-    other = pack_hash(other)
-    @hash.merge!(other)
+  def update(other_hash)
+    if other_hash.is_a? CastedHash
+      @hash.update other_hash.pack_hash(self)
+    else
+      other_hash.each_pair { |key, value| store(key, value) }
+    end
+
+    self
+  end
+
+  def merge(other)
+    self.dup.update other
   end
 
   def casted?(key)
@@ -82,6 +102,10 @@ class CastedHash
     end
   end
 
+  def dup
+    self.class.new(self, @cast_proc)
+  end
+
 private
 
   def raw
@@ -94,17 +118,13 @@ private
     end
   end
 
-  def pack(value)
+  def pack(value, casted_hash = self)
     if value.is_a?(Value)
+      value.casted_hash =  casted_hash
       value
     else
-      Value.new(value, cast_proc)
+      Value.new(value, casted_hash)
     end
   end
 
-  def pack_hash(hash)
-    hash.inject({}) do |hash, (key, value)|
-      hash.merge key => pack(value)
-    end if hash
-  end
 end

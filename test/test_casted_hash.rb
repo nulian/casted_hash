@@ -44,7 +44,7 @@ class TestCastedHash < Minitest::Test
     end
 
     it "should inspect casted values" do
-      hash = CastedHash.new(nil, lambda { |x| "foobar" })
+      hash = CastedHash.new({}, lambda { |x| "foobar" })
 
       assert_equal("#<CastedHash hash={}>", hash.inspect)
 
@@ -87,15 +87,33 @@ class TestCastedHash < Minitest::Test
       assert_equal 12, hash[:b]
     end
 
-    it "should merge! values" do
-      hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
-      assert_equal 11, hash[:a]
-      assert_equal 12, hash[:b]
-      
-      hash.merge!({:a => 3})
+    it "should take over scope when merging two casted hashes" do
+      hash1 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
+      hash2 = CastedHash.new({:c => 3, :d => 4}, lambda {|x| x + 100 })
 
-      assert_equal 13, hash[:a]
-      assert_equal 12, hash[:b]
+      assert_equal 11, hash1[:a]
+      assert_equal 12, hash1[:b]
+      assert hash1.casted?(:a)
+      assert hash1.casted?(:b)
+
+      cast_proc1_object_id = hash1.cast_proc.object_id
+      assert_equal [hash1.object_id], hash1.send(:raw).values.map{|v|v.casted_hash.object_id}.uniq
+
+      hash3 = hash1.merge hash2
+
+      assert_equal [hash3.object_id], hash3.send(:raw).values.map{|v|v.casted_hash.object_id}.uniq
+      assert_equal hash3.cast_proc.object_id, cast_proc1_object_id
+
+      assert_equal ["a", "b", "c", "d"], hash3.keys
+      assert hash3.casted?(:a)
+      assert hash3.casted?(:b)
+      assert !hash3.casted?(:c)
+      assert !hash3.casted?(:d)
+
+      assert_equal 11, hash3[:a]
+      assert_equal 12, hash3[:b]
+      assert_equal 13, hash3[:c]
+      assert_equal 14, hash3[:d]
     end
 
     it "should not cast all values when merging hashes" do
@@ -106,23 +124,8 @@ class TestCastedHash < Minitest::Test
       assert !hash.casted?(:b)
       assert !hash.casted?(:c)
 
-      hash.merge! :c => 3
-
-      assert !hash.casted?(:a)
-      assert !hash.casted?(:b)
-      assert !hash.casted?(:c)
-
       other_hash = CastedHash.new({:c => 1, :d => 2}, lambda {|x| x + 10 })
       hash = hash.merge other_hash
-
-      assert !hash.casted?(:a)
-      assert !hash.casted?(:b)
-      assert !hash.casted?(:c)
-      assert !other_hash.casted?(:c)
-      assert !other_hash.casted?(:d)
-
-      other_hash = CastedHash.new({:c => 1, :d => 2}, lambda {|x| x + 10 })
-      hash.merge! other_hash
 
       assert !hash.casted?(:a)
       assert !hash.casted?(:b)

@@ -2,10 +2,11 @@ class CastedHash
   class Value
     include Equalizer.new(:value)
     attr_reader :value
+    attr_accessor :casted_hash
 
-    def initialize(value, cast_proc)
+    def initialize(value, casted_hash)
       @value = value
-      @cast_proc = cast_proc
+      @casted_hash = casted_hash
     end
 
     def casted_value
@@ -20,7 +21,7 @@ class CastedHash
     def cast!
       return if casted?
 
-      @value = @cast_proc.call(value)
+      @value = casted_hash.cast_proc.call(value)
       @casted = true
     end
   end
