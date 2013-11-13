@@ -82,6 +82,7 @@ class CastedHash
 
     self
   end
+  alias_method :merge!, :update
 
   def merge(other)
     self.dup.update other
