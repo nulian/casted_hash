@@ -27,6 +27,16 @@ class TestCastedHash < Minitest::Test
       assert !hash.casted?(:b)
     end
 
+    it "should respond to any? and empty?" do
+      hash = CastedHash.new({}, lambda {})
+      assert hash.empty?
+      assert !hash.any?
+
+      hash = CastedHash.new({:foo => "bar"}, lambda {})
+      assert !hash.empty?
+      assert hash.any?
+    end
+
     it "should only cast once" do
       hash = CastedHash.new({:foo => 1}, lambda { |x| x + 1 })
 

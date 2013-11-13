@@ -8,7 +8,7 @@ class CastedHash
   extend Forwardable
   attr_reader :cast_proc
 
-  def_delegators :@hash, *[:keys, :inject, :key?, :include?]
+  def_delegators :@hash, *[:keys, :inject, :key?, :include?, :empty?, :any?]
   def_delegators :casted_hash, *[:collect, :reject]
 
   def initialize(constructor = {}, cast_proc = nil)
@@ -72,6 +72,8 @@ class CastedHash
   end
 
   def update(other_hash)
+    return unless other_hash.any?
+
     if other_hash.is_a? CastedHash
       @hash.update other_hash.pack_hash(self)
     else
