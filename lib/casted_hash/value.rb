@@ -20,9 +20,14 @@ class CastedHash
 
     def cast!
       return if casted?
+      raise SystemStackError, "Cannot cast value that is currently being cast" if @casting
+
+      @casting = true
 
       @value = casted_hash.cast_proc.call(value)
+    ensure
       @casted = true
+      @casting = false
     end
   end
 end

@@ -16,6 +16,14 @@ class TestCastedHash < Minitest::Test
       assert_equal "3", hash[:bar]
     end
 
+    it "should not loop when refering to itself" do
+      @hash = CastedHash.new({:a => 1}, lambda {|x| @hash[:a] + 1 })
+      exception = assert_raises(SystemStackError) do
+        @hash[:a]
+      end
+      assert_equal "Cannot cast value that is currently being cast", exception.message
+    end
+
     it "should cast when expected" do
       hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       assert !hash.casted?(:a)
