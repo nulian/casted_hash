@@ -2,7 +2,7 @@ require 'helper'
 
 describe CastedHash do
 
-  it "should be able to define a cast method" do
+  it "is able to define a cast method" do
     hash = CastedHash.new({:foo => 1}, lambda { |x| x.to_s })
 
     hash[:bar] = 1
@@ -15,26 +15,23 @@ describe CastedHash do
     assert_equal "3", hash[:bar]
   end
 
-  it "should not loop when refering to itself" do
+  it "does not loop when refering to itself" do
     @hash = CastedHash.new({:a => 1}, lambda {|x| @hash[:a] + 1 })
-    exception = assert_raises(SystemStackError) do
-      @hash[:a]
-    end
-    assert_equal "Cannot cast value that is currently being cast", exception.message
+    assert_equal 2, @hash[:a]
   end
 
-  it "should cast when expected" do
+  it "casts when expected" do
     hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
     assert !hash.casted?(:a)
     assert !hash.casted?(:b)
 
-    assert hash[:a]
+    assert_equal 11, hash[:a]
 
     assert hash.casted?(:a)
     assert !hash.casted?(:b)
   end
 
-  it "should respond to any? and empty?" do
+  it "responds to any? and empty?" do
     hash = CastedHash.new({}, lambda {})
     assert hash.empty?
     assert !hash.any?
@@ -44,7 +41,7 @@ describe CastedHash do
     assert hash.any?
   end
 
-  it "should only cast once" do
+  it "only casts once" do
     hash = CastedHash.new({:foo => 1}, lambda { |x| x + 1 })
 
     assert_equal 2, hash[:foo]
@@ -55,28 +52,12 @@ describe CastedHash do
     assert_equal 124, hash[:bar]
   end
 
-  it "should be able to fetch all casted values" do
+  it "is able to fetch all casted values" do
     hash = CastedHash.new({:a => 1, :b => 10, :c => 100}, lambda { |x| x * 10 })
     assert_equal [10, 100, 1000], hash.values
   end
 
-  it "should inspect casted values" do
-    hash = CastedHash.new({}, lambda { |x| "foobar" })
-
-    assert_equal("#<CastedHash hash={}>", hash.inspect)
-
-    hash[:bar] = "foo"
-    assert_equal("#<CastedHash hash={\"bar\"=>\"<foo>\"}>", hash.inspect) # not yet casted
-    assert_equal("foobar", hash[:bar])
-    assert_equal("#<CastedHash hash={\"bar\"=>\"foobar\"}>", hash.inspect)
-
-    hash = CastedHash.new({:foo => "bar"}, lambda { |x| "foobar" })
-    assert_equal("#<CastedHash hash={\"foo\"=>\"<bar>\"}>", hash.inspect) # not yet casted
-    assert_equal("foobar", hash[:foo])
-    assert_equal("#<CastedHash hash={\"foo\"=>\"foobar\"}>", hash.inspect)
-  end
-
-  it "should loop through casted values" do
+  it "loops through casted values" do
     hash = CastedHash.new({:a => 1, :b => 2}, lambda { |x| "processed: #{x}" })
     map = []
 
@@ -87,14 +68,14 @@ describe CastedHash do
     assert_equal ["processed: 1", "processed: 2"], map
   end
 
-  it "should delete values" do
+  it "deletes values" do
     hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
     hash.delete(:b)
     assert_equal({"a" => 11}, hash.casted_hash)
   end
 
   describe "merge" do
-    it "should merge values" do
+    it "merges values" do
       hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       assert_equal 11, hash[:a]
       assert_equal 12, hash[:b]
@@ -107,36 +88,39 @@ describe CastedHash do
       assert_equal hash, hash.merge({})
     end
 
-    it "should take over scope when merging two casted hashes" do
+    it "leaves original hash alone" do
+      hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
+      new_hash = hash.merge({:c => 3})
+
+      assert_equal ['a', 'b', 'c'], new_hash.keys
+      assert_equal ['a', 'b'], hash.keys
+    end
+
+    it "takes over scope when merging two casted hashes" do
       hash1 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
-      hash2 = CastedHash.new({:c => 3, :d => 4}, lambda {|x| x + 100 })
+      hash2 = CastedHash.new({:a => 2, :c => 3, :d => 4}, lambda {|x| x + 100 })
 
       assert_equal 11, hash1[:a]
       assert_equal 12, hash1[:b]
+      assert_equal 104, hash2[:d]
       assert hash1.casted?(:a)
       assert hash1.casted?(:b)
 
-      cast_proc1_object_id = hash1.cast_proc.object_id
-      assert_equal [hash1.object_id], hash1.send(:raw).values.map{|v|v.casted_hash.object_id}.uniq
-
       hash3 = hash1.merge hash2
 
-      assert_equal [hash3.object_id], hash3.send(:raw).values.map{|v|v.casted_hash.object_id}.uniq
-      assert_equal hash3.cast_proc.object_id, cast_proc1_object_id
-
       assert_equal ["a", "b", "c", "d"], hash3.keys
-      assert hash3.casted?(:a)
+      assert !hash3.casted?(:a)
       assert hash3.casted?(:b)
       assert !hash3.casted?(:c)
       assert !hash3.casted?(:d)
 
-      assert_equal 11, hash3[:a]
+      assert_equal 12, hash3[:a]
       assert_equal 12, hash3[:b]
       assert_equal 13, hash3[:c]
-      assert_equal 14, hash3[:d]
+      assert_equal 114, hash3[:d] # casted twice
     end
 
-    it "should not cast all values when merging hashes" do
+    it "does not cast all values when merging hashes" do
       hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       hash = hash.merge :c => 3
 
@@ -156,7 +140,7 @@ describe CastedHash do
   end
 
   describe "merge!" do
-    it "should merge! values" do
+    it "merge!s values" do
       hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       assert_equal 11, hash[:a]
       assert_equal 12, hash[:b]
@@ -167,7 +151,7 @@ describe CastedHash do
       assert_equal 12, hash[:b]
     end
 
-    it "should take over scope when merging two casted hashes" do
+    it "takes over scope when merging two casted hashes" do
       hash1 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       hash2 = CastedHash.new({:c => 3, :d => 4}, lambda {|x| x + 100 })
 
@@ -176,13 +160,7 @@ describe CastedHash do
       assert hash1.casted?(:a)
       assert hash1.casted?(:b)
 
-      cast_proc1_object_id = hash1.cast_proc.object_id
-      assert_equal [hash1.object_id], hash1.send(:raw).values.map{|v|v.casted_hash.object_id}.uniq
-
       hash1.merge! hash2
-
-      assert_equal [hash1.object_id], hash1.send(:raw).values.map{|v|v.casted_hash.object_id}.uniq
-      assert_equal hash1.cast_proc.object_id, cast_proc1_object_id
 
       assert_equal ["a", "b", "c", "d"], hash1.keys
       assert hash1.casted?(:a)
@@ -196,7 +174,7 @@ describe CastedHash do
       assert_equal 14, hash1[:d]
     end
 
-    it "should not cast all values when merging hashes" do
+    it "does not cast all values when merging hashes" do
       hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
       hash.merge! :c => 3
 
@@ -215,20 +193,11 @@ describe CastedHash do
     end
   end
 
-  it "should define a hash method" do
-    l = lambda {|x| x + 10 }
-    hash1 = CastedHash.new({:a => 1, :b => 2}, l)
-    hash2 = CastedHash.new({:a => 1, :b => 2}, l)
-    hash3 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 11 })
+  it "does not add all requested values" do
+    hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x|x + 1})
+    assert_equal 2, hash.fetch(:a)
 
-    assert_equal hash1.hash, hash2.hash
-    assert hash1.hash != hash3.hash
-  end
-
-  it "should not add all requested values" do
-    hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x|x})
     assert_nil hash[:undefined_key]
-
     assert_equal ["a", "b"], hash.keys
 
     assert_raises(KeyError) do
