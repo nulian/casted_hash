@@ -8,7 +8,7 @@ class CastedHash < Hash
 
     if constructor.is_a?(CastedHash)
       super()
-      @casted_keys = constructor.instance_variable_get(:@casted_keys)
+      @casted_keys = constructor.instance_variable_get(:@casted_keys).dup
       regular_update(constructor)
     elsif constructor.is_a?(Hash)
       @casted_keys = []

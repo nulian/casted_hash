@@ -97,7 +97,7 @@ describe CastedHash do
     end
 
     it "takes over scope when merging two casted hashes" do
-      hash1 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
+      hash1 = CastedHash.new({:a => 1, :b => 2, :z => 0}, lambda {|x| x + 10 })
       hash2 = CastedHash.new({:a => 2, :c => 3, :d => 4}, lambda {|x| x + 100 })
 
       assert_equal 11, hash1[:a]
@@ -108,7 +108,10 @@ describe CastedHash do
 
       hash3 = hash1.merge hash2
 
-      assert_equal ["a", "b", "c", "d"], hash3.keys
+      assert_equal 10, hash3[:z]
+      assert !hash1.casted?(:z)
+
+      assert_equal ["a", "b", "c", "d", "z"], hash3.keys.sort
       assert !hash3.casted?(:a)
       assert hash3.casted?(:b)
       assert !hash3.casted?(:c)
