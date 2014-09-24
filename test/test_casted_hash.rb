@@ -211,4 +211,13 @@ describe CastedHash do
     assert_equal ["a", "b"], hash.keys
   end
 
+  it "allows access to 'raw' hash" do
+    hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x|x + 1})
+    assert_equal Hash, hash.to_hash.class
+    assert_equal({"a" => 1, "b" => 2}, hash.to_hash)
+    assert_equal 2, hash.fetch(:a)
+    assert_equal({"a" => 2, "b" => 2}, hash.to_hash)
+    assert_equal 3, hash.fetch(:b)
+    assert_equal({"a" => 2, "b" => 3}, hash.to_hash)
+  end
 end
