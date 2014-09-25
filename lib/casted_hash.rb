@@ -56,9 +56,9 @@ class CastedHash < Hash
     if other_hash.is_a? CastedHash
       other_hash.keys.each do |key|
         if other_hash.casted?(key)
-          casted! key
-        else
-          uncast! key
+          casted!(key)
+        elsif casted?(key)
+          uncast!(key)
         end
       end
       super(other_hash)
