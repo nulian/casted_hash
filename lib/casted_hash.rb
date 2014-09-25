@@ -127,7 +127,9 @@ class CastedHash < Hash
   end
 
   def casted!(*keys)
-    @casted_keys.concat keys.map(&:to_s)
+    keys.map(&:to_s).each do |key|
+      @casted_keys << key if key?(key)
+    end
   end
 
 protected
