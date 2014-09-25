@@ -105,6 +105,7 @@ describe CastedHash do
       assert_equal 104, hash2[:d]
       assert hash1.casted?(:a)
       assert hash1.casted?(:b)
+      assert hash2.casted?(:d)
 
       hash3 = hash1.merge hash2
 
@@ -115,12 +116,12 @@ describe CastedHash do
       assert !hash3.casted?(:a)
       assert hash3.casted?(:b)
       assert !hash3.casted?(:c)
-      assert !hash3.casted?(:d)
+      assert hash3.casted?(:d) # already casted
 
       assert_equal 12, hash3[:a]
       assert_equal 12, hash3[:b]
       assert_equal 13, hash3[:c]
-      assert_equal 114, hash3[:d] # casted twice
+      assert_equal 104, hash3[:d] # already casted
     end
 
     it "does not cast all values when merging hashes" do

@@ -54,7 +54,13 @@ class CastedHash < Hash
     return self if other_hash.empty?
 
     if other_hash.is_a? CastedHash
-      other_hash.keys.each{|key| uncast! key}
+      other_hash.keys.each do |key|
+        if other_hash.casted?(key)
+          casted! key
+        else
+          uncast! key
+        end
+      end
       super(other_hash)
     else
       other_hash.each_pair { |key, value| self[key] = value }
