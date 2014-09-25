@@ -40,7 +40,7 @@ class CastedHash < Hash
   alias_method :regular_update, :update unless method_defined?(:regular_update)
 
   def []=(key, value)
-    @casted_keys.delete key.to_s
+    uncast! key
     regular_writer(convert_key(key), value)
   end
 
@@ -54,7 +54,7 @@ class CastedHash < Hash
     return self if other_hash.empty?
 
     if other_hash.is_a? CastedHash
-      other_hash.keys.each{|key| @casted_keys.delete key}
+      other_hash.keys.each{|key| uncast! key}
       super(other_hash)
     else
       other_hash.each_pair { |key, value| self[key] = value }
@@ -81,7 +81,7 @@ class CastedHash < Hash
   end
 
   def delete(key)
-    @casted_keys.delete key.to_s
+    uncast! key
     super(convert_key(key))
   end
 
@@ -125,6 +125,10 @@ class CastedHash < Hash
   end
 
 protected
+
+  def uncast!(*keys)
+    @casted_keys.delete *keys.map(&:to_s)
+  end
 
   def cast!(key)
     return unless key?(key)
