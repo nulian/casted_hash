@@ -138,7 +138,9 @@ protected
     value = if @cast_proc.arity == 1
       @cast_proc.call regular_reader(convert_key(key))
     elsif @cast_proc.arity == 2
-      @cast_proc.call key, regular_reader(convert_key(key))
+      @cast_proc.call self, regular_reader(convert_key(key))
+    elsif @cast_proc.arity == 3
+      @cast_proc.call self, key, regular_reader(convert_key(key))
     else
       @cast_proc.call
     end
