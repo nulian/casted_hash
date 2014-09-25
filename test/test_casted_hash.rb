@@ -230,4 +230,12 @@ describe CastedHash do
     assert_equal 3, hash.fetch(:b)
     assert_equal({"a" => 2, "b" => 3}, hash.casted)
   end
+
+  it "allows bypassing of casting" do
+    hash = CastedHash.new({:a => 1, :b => 2, :c => 3}, lambda {|x|x + 1})
+    hash.casted! "a", :b
+    assert_equal 1, hash[:a]
+    assert_equal 2, hash[:b]
+    assert_equal 4, hash[:c]
+  end
 end

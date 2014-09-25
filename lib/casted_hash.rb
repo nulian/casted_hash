@@ -120,12 +120,16 @@ class CastedHash < Hash
     end
   end
 
+  def casted!(*keys)
+    @casted_keys.concat keys.map(&:to_s)
+  end
+
 protected
 
   def cast!(key)
     return unless key?(key)
     return regular_reader(convert_key(key)) if casted?(key)
-    @casted_keys << key.to_s
+    casted! key
 
     value = if @cast_proc.arity == 1
       @cast_proc.call regular_reader(convert_key(key))
