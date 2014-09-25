@@ -112,6 +112,14 @@ class CastedHash < Hash
     end
   end
 
+  def casted
+    Hash.new.tap do |hash|
+      @casted_keys.each do |key|
+        hash[key] = regular_reader(key)
+      end
+    end
+  end
+
 protected
 
   def cast!(key)

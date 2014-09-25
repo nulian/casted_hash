@@ -220,4 +220,14 @@ describe CastedHash do
     assert_equal 3, hash.fetch(:b)
     assert_equal({"a" => 2, "b" => 3}, hash.to_hash)
   end
+
+  it "allows access to casted keys only" do
+    hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x|x + 1})
+    assert_equal Hash, hash.casted.class
+    assert_equal({}, hash.casted)
+    assert_equal 2, hash.fetch(:a)
+    assert_equal({"a" => 2}, hash.casted)
+    assert_equal 3, hash.fetch(:b)
+    assert_equal({"a" => 2, "b" => 3}, hash.casted)
+  end
 end
