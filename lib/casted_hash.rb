@@ -53,15 +53,16 @@ class CastedHash < Hash
   def update(other_hash)
     return self if other_hash.empty?
 
-    if other_hash.is_a? CastedHash
-      other_hash.keys.each do |key|
-        if other_hash.casted?(key)
-          casted!(key)
-        elsif casted?(key)
-          uncast!(key)
+    if other_hash.is_a?(CastedHash)
+      super(other_hash).tap do
+        other_hash.keys.each do |key|
+          if other_hash.casted?(key)
+            casted!(key)
+          elsif casted?(key)
+            uncast!(key)
+          end
         end
       end
-      super(other_hash)
     else
       other_hash.each_pair { |key, value| self[key] = value }
       self

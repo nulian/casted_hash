@@ -102,22 +102,23 @@ describe CastedHash do
 
       assert_equal 11, hash1[:a]
       assert_equal 12, hash1[:b]
-      assert_equal 104, hash2[:d]
       assert hash1.casted?(:a)
       assert hash1.casted?(:b)
-      assert hash2.casted?(:d)
 
+      assert_equal 104, hash2[:d]
+      assert hash2.casted?(:d)
       assert !hash2.casted?(:a)
 
       hash3 = hash1.merge hash2
       assert_equal 10, hash3[:z]
+      assert hash3.casted?(:z)
       assert !hash1.casted?(:z)
 
       assert_equal ["a", "b", "c", "d", "z"], hash3.keys.sort
-      assert !hash3.casted?(:a)
-      assert hash3.casted?(:b)
-      assert !hash3.casted?(:c)
-      assert hash3.casted?(:d) # already casted
+      assert !hash3.casted?(:a) # overwritten with uncasted value
+      assert hash3.casted?(:b) # not overwritten, still casted
+      assert !hash3.casted?(:c) # overwritten with uncasted value
+      assert hash3.casted?(:d) # overwritten with casted value
 
       assert_equal 12, hash3[:a]
       assert_equal 12, hash3[:b]
@@ -126,18 +127,13 @@ describe CastedHash do
     end
 
     it "doesn't uncast when merging same value" do
-      hash1 = CastedHash.new({:a => 1, :b => 2, :c => 3}, lambda {|x| x + 1})
-      hash2 = CastedHash.new({:a => 0, :b => 2, :c => 4}, lambda {|x| x + 2})
-
+      hash1 = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 1})
       assert_equal 2, hash1[:a]
-      assert_equal 3, hash1[:b]
-      assert_equal 4, hash1[:c]
 
-      hash3 = hash1.merge(hash2)
+      hash1.merge!(hash1)
 
-      assert !hash3.casted?(:a) # value is different
-      assert !hash3.casted?(:b)
-      assert  hash3.casted?(:c)
+      assert hash1.casted?(:a)
+      assert !hash1.casted?(:b)
     end
 
     it "does not cast all values when merging hashes" do
