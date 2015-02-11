@@ -1,5 +1,5 @@
 class CastedHash < Hash
-  VERSION = "0.5.3"
+  VERSION = "0.6.0"
 
   def initialize(constructor = {}, cast_proc = nil)
     raise ArgumentError, "`cast_proc` required" unless cast_proc
