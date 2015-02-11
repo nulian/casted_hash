@@ -20,6 +20,12 @@ describe CastedHash do
     assert_equal 2, @hash[:a]
   end
 
+  it "can check size without casting" do
+    hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
+    assert hash.any?
+    assert_empty hash.casted
+  end
+
   it "casts when expected" do
     hash = CastedHash.new({:a => 1, :b => 2}, lambda {|x| x + 10 })
     assert !hash.casted?(:a)
