@@ -17,7 +17,9 @@ describe CastedHash do
 
   it "does not loop when refering to itself" do
     @hash = CastedHash.new({:a => 1}, lambda {|x| @hash[:a] + 1 })
-    assert_equal 2, @hash[:a]
+    assert_raises(SystemStackError) do
+      @hash[:a]
+    end
   end
 
   it "can check size without casting" do

@@ -5,6 +5,7 @@ class CastedHash < Hash
     raise ArgumentError, "`cast_proc` required" unless cast_proc
 
     @cast_proc = cast_proc
+    @casting_keys = []
 
     if constructor.is_a?(CastedHash)
       super()
@@ -111,6 +112,10 @@ class CastedHash < Hash
     @casted_keys.include?(key.to_s)
   end
 
+  def casting?(key)
+    @casting_keys.include?(key.to_s)
+  end
+
   def to_hash
     Hash.new.tap do |hash|
       keys.each do |key|
@@ -133,16 +138,25 @@ class CastedHash < Hash
     end
   end
 
+  def casting!(*keys)
+    keys.map(&:to_s).each do |key|
+      @casting_keys << key if key?(key)
+    end
+  end
+
 protected
 
   def uncast!(*keys)
     @casted_keys.delete *keys.map(&:to_s)
+    @casting_keys.delete *keys.map(&:to_s)
   end
 
   def cast!(key)
     return unless key?(key)
     return regular_reader(convert_key(key)) if casted?(key)
-    casted! key
+    raise SystemStackError if casting?(key)
+
+    casting! key
 
     value = if @cast_proc.arity == 1
       @cast_proc.call regular_reader(convert_key(key))
@@ -154,7 +168,11 @@ protected
       @cast_proc.call
     end
 
-    regular_writer(convert_key(key), value)
+    value = regular_writer(convert_key(key), value)
+
+    casted! key
+
+    value
   end
 
   def cast_all!
