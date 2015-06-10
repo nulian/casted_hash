@@ -20,6 +20,8 @@ describe CastedHash do
     assert_raises(SystemStackError) do
       @hash[:a]
     end
+
+    assert_empty @hash.casted
   end
 
   it "can check size without casting" do
