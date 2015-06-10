@@ -148,7 +148,6 @@ protected
 
   def uncast!(*keys)
     @casted_keys.delete *keys.map(&:to_s)
-    @casting_keys.delete *keys.map(&:to_s)
   end
 
   def cast!(key)
@@ -173,6 +172,8 @@ protected
     casted! key
 
     value
+  ensure
+    @casting_keys.delete convert_key(key)
   end
 
   def cast_all!

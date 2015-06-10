@@ -22,6 +22,8 @@ describe CastedHash do
     end
     assert_equal "already casting a", error.message
     assert_empty @hash.casted
+    assert !@hash.casted?(:a)
+    assert !@hash.casting?(:a)
   end
 
   it "can check size without casting" do
