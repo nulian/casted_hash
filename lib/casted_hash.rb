@@ -151,23 +151,24 @@ protected
   end
 
   def cast!(key)
+    key = convert_key(key)
     return unless key?(key)
-    return regular_reader(convert_key(key)) if casted?(key)
+    return regular_reader(key) if casted?(key)
     raise SystemStackError, "already casting #{key}" if casting?(key)
 
     casting! key
 
     value = if @cast_proc.arity == 1
-      @cast_proc.call regular_reader(convert_key(key))
+      @cast_proc.call regular_reader(key)
     elsif @cast_proc.arity == 2
-      @cast_proc.call self, regular_reader(convert_key(key))
+      @cast_proc.call self, regular_reader(key)
     elsif @cast_proc.arity == 3
-      @cast_proc.call self, key, regular_reader(convert_key(key))
+      @cast_proc.call self, key, regular_reader(key)
     else
       @cast_proc.call
     end
 
-    value = regular_writer(convert_key(key), value)
+    value = regular_writer(key, value)
 
     casted! key
 
