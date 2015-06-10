@@ -154,7 +154,7 @@ protected
   def cast!(key)
     return unless key?(key)
     return regular_reader(convert_key(key)) if casted?(key)
-    raise SystemStackError if casting?(key)
+    raise SystemStackError, "already casting #{key}" if casting?(key)
 
     casting! key
 

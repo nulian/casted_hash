@@ -17,10 +17,10 @@ describe CastedHash do
 
   it "does not loop when refering to itself" do
     @hash = CastedHash.new({:a => 1}, lambda {|x| @hash[:a] + 1 })
-    assert_raises(SystemStackError) do
+    error = assert_raises(SystemStackError) do
       @hash[:a]
     end
-
+    assert_equal "already casting a", error.message
     assert_empty @hash.casted
   end
 
