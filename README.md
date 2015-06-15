@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stephankaag/cached_hash.png?branch=master)](https://travis-ci.org/stephankaag/cached_hash)
+[![Build Status](https://travis-ci.org/bettyblocks/casted_hash.svg)](https://travis-ci.org/bettyblocks/casted_hash)
 
 # CastedHash
 
